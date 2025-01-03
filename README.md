@@ -24,7 +24,7 @@
 ### 步骤 1: 克隆仓库
 
 ```bash
-git clone [https://github.com/your-github-username/your-repository-name.git](https://github.com/comboent/ask-ai.git)
+git clone https://github.com/comboent/ask-ai.git
 cd ask-ai
 ```
 
