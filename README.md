@@ -24,8 +24,8 @@
 ### 步骤 1: 克隆仓库
 
 ```bash
-git clone https://github.com/your-github-username/your-repository-name.git
-cd your-repository-name
+git clone [https://github.com/your-github-username/your-repository-name.git](https://github.com/comboent/ask-ai.git)
+cd ask-ai
 ```
 
 ### 步骤 2: 安装依赖
