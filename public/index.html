@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛博朋克问答系统</title>
+    <link href="/output.css" rel="stylesheet">
+    <style>
+          /* Canvas styles */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+             pointer-events: none; /* 让 canvas 不响应鼠标事件 */
+        }
+      body {
+            background-color: #000;
+            /* Dark background */
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+           content: "";
+             position: absolute;
+               top: 0;
+            left: 0;
+             width: 100%;
+              height: 100%;
+            background: radial-gradient(ellipse at center, rgba(0, 255, 204, 0.1) 0%, transparent 70%),
+            linear-gradient(45deg, rgba(0, 255, 204, 0.1) 25%, transparent 25%),
+             linear-gradient(-45deg, rgba(0, 255, 204, 0.1) 25%, transparent 25%);
+           background-size: 80px 80px;
+            z-index: 0;
+              animation: neon-flicker 20s linear infinite; /* Add flicker animation */
+              pointer-events: none;
+        }
+          body::after{
+              content: "";
+            position: absolute;
+           top: 0;
+          left: 0;
+              width: 100%;
+              height: 100%;
+             background-image:
+                 linear-gradient(to right,  rgba(0, 255, 204, 0.1) ,  transparent ),
+             linear-gradient(to bottom,  rgba(0, 255, 204, 0.1), transparent );
+             background-size: 20px 20px;
+             z-index: 0;
+            animation: neon-flicker 10s linear infinite;
+            pointer-events: none;
+
+          }
+           @keyframes neon-flicker {
+            0%, 100% {
+             opacity: 0.3;
+           }
+           50% {
+              opacity: 1;
+            }
+          }
+        /* Animation styles */
+        .fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+         /* sidebar */
+        .sidebar {
+           position: fixed;
+            top: 0;
+            right: 0;
+            height: 100%;
+             width: 250px;
+             background-color: rgba(0, 0, 0, 0.8);
+             padding: 20px;
+             box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+            z-index: 1;
+           font-family: 'monospace';
+               color: #00ffcc; /* Neon green text */
+                scrollbar-width: thin;
+                scrollbar-color: #00ffcc #333;
+
+         }
+         /* For Chrome, Safari, and newer versions of Edge */
+          .sidebar::-webkit-scrollbar {
+              width: 3px;
+           }
+        .sidebar::-webkit-scrollbar-track {
+          background-color: rgba(255, 255, 255, 0.2);
+             backdrop-filter: blur(10px); /* Apply blur effect */
+         }
+           .sidebar::-webkit-scrollbar-track-piece {
+             background-color: rgba(255, 255, 255, 0.2);
+             backdrop-filter: blur(10px); /* Apply blur effect */
+           }
+
+         .sidebar::-webkit-scrollbar-thumb {
+               background-color: rgba(0, 255, 204, 0.5);
+              border-radius: 5px;
+
+           }
+          .sidebar h2 {
+            margin-bottom: 10px;
+            color: #00ffcc; /* Neon green text */
+             text-shadow: 0 0 5px #00ffcc; /* Neon glow */
+              position: sticky;
+              top: 0;
+             background-color: rgba(0, 0, 0, 0.8);
+                z-index: 3;
+               padding-bottom: 10px;
+
+            }
+         .sidebar .search-container {
+             position: sticky;
+              top: 40px;
+             background-color: rgba(0, 0, 0, 0.8);
+            z-index: 3;
+            padding-bottom: 10px;
+               margin-bottom: 10px;
+
+         }
+         .sidebar .model-list-container {
+              max-height: calc(100% - 110px); /* adjust height as needed  */
+                overflow-y: auto;
+               z-index: 1;
+        }
+         .sidebar input {
+             padding: 8px;
+             border: 1px solid #00ffcc; /* Neon green border */
+            border-radius: 4px;
+            width: 100%;
+           box-sizing: border-box;
+            background-color: rgba(0, 0, 0, 0.4);
+           color: #00ffcc; /* Neon green text */
+             font-family: 'monospace';
+              transition: border-color 0.3s ease;
+
+        }
+
+        .sidebar input:focus {
+            border-color: #5890ff;
+             outline: none;
+        }
+         .sidebar ul {
+            list-style: none;
+            padding: 0;
+             background-color: rgba(0, 0, 0, 0.4);
+             border-radius: 10px;
+         }
+
+        .sidebar ul li {
+           padding: 10px;
+             cursor: pointer;
+           transition: all 0.3s ease;
+           border-radius: 5px;
+             text-shadow: 0 0 3px #00ffcc; /* Neon text glow */
+             border: 1px solid transparent;
+            /* Initial transparent border */
+        }
+          .sidebar ul li:hover {
+                background-color: rgba(0, 255, 204, 0.1); /* Neon glow hover effect */
+              border: 1px solid  #00ffcc; /* Add a neon border on hover */
+            box-shadow: 0 0 5px #00ffcc; /* Add a neon border on hover */
+
+          }
+         .sidebar ul li.active {
+            background-color: rgba(0, 255, 204, 0.2);
+             /* Lighter green for active */
+          text-shadow: 0 0 7px #00ffcc;
+            /* Stronger active neon glow */
+          border: 1px solid #00ffcc;
+              box-shadow: 0 0 10px #00ffcc;
+              /* Add a neon border on active */
+         }
+         /* Answer area */
+           #answer-area {
+             max-height: 300px;
+           overflow-y: auto;
+            }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center relative">
+    <canvas id="bg-canvas"></canvas>
+    <div class="container mx-auto px-4 max-w-4xl py-10 fade-in">
+        <div class="bg-white p-8 rounded-xl shadow-md space-y-6">
+          <h1 class="text-2xl font-semibold text-gray-800 text-center">🧠 AI 洞察，一触即答 💬</h1>
+             <h2 class="text-gray-500 text-center">Ask away, I already know the answer.</h2>
+
+            <form id="question-form" class="flex gap-4">
+                <input type="text" id="question-input" placeholder="请输入你的问题"
+                    class="border border-gray-300 rounded px-4 py-3 focus:outline-none w-full ring-2 ring-indigo-300 focus:ring-indigo-500 transition-all duration-300 focus:ring-indigo-500">
+                <button type="submit" id="submit-button"
+                    class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-3 px-6 rounded uppercase tracking-wider shadow-md transition-all duration-300">
+                    提问
+                </button>
+            </form>
+
+            <div id="answer-area"
+                class="border border-gray-300 rounded p-6 text-gray-700 whitespace-pre-line shadow-md transition-all duration-300">
+                <!-- 回答显示在这里 -->
+                <div id="error-area" class="text-red-500 mt-2">
+                    <!-- 错误信息显示在这里 -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+     <div class="sidebar">
+        <h2>选择模型</h2>
+        <div class="search-container">
+            <input type="text" id="model-search" placeholder="搜索模型">
+        </div>
+       <div class="model-list-container">
+           <ul id="model-list">
+                <!-- Model list will be populated here -->
+            </ul>
+        </div>
+
+    </div>
+
+    <script>
+         const questionForm = document.getElementById('question-form');
+        const questionInput = document.getElementById('question-input');
+        const answerArea = document.getElementById('answer-area');
+        const errorArea = document.getElementById('error-area')
+         const modelList = document.getElementById('model-list');
+          const modelSearch = document.getElementById('model-search');
+           let currentModel = null;
+           let allModels = []
+
+           async function fetchModels() {
+                try {
+                    const response = await fetch('/models');
+                    if (!response.ok) {
+                     throw new Error(`Failed to fetch models: ${response.status} - ${response.statusText}`)
+                    }
+                    const data = await response.json();
+                   if(!data || !data.models || !Array.isArray(data.models)){
+                       throw new Error("Invalid model response from backend")
+                  }
+                    allModels = data.models;
+                    if(allModels.length > 0){
+                        currentModel = allModels[0]
+                    }
+                    sortModels();
+                    renderModels(allModels);
+                } catch (error) {
+                  console.error(error)
+                    modelList.innerHTML = `<li>Failed to load models:${error.message}</li>`
+                }
+            }
+
+             function renderModels(models) {
+                 modelList.innerHTML = "";
+                 models.forEach(model => {
+                      const li = document.createElement('li');
+                     li.textContent = model;
+                      li.setAttribute('data-model', model);
+                      if (model === currentModel) {
+                       li.classList.add('active');
+                   }
+                      modelList.appendChild(li);
+                 });
+            }
+          function sortModels(){
+             allModels.sort((a,b) => a.localeCompare(b))
+           }
+           function filterModels(){
+             const searchTerm = modelSearch.value.toLowerCase();
+               const filteredModels = allModels.filter(model => model.toLowerCase().includes(searchTerm))
+             renderModels(filteredModels);
+           }
+
+        fetchModels()
+        questionForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const question = questionInput.value;
+            if (!question.trim()) {
+                alert('请输入你的问题！')
+                return
+            }
+
+            answerArea.textContent = "正在思考，请稍后...";
+             errorArea.textContent = ""
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question,
+                         model: currentModel
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json()
+                    throw new Error(`请求失败： ${response.status} - ${errorData.error}`)
+                }
+
+                const data = await response.json();
+                answerArea.textContent = data.answer;
+                questionInput.value = ''; // 清空输入框
+            } catch (error) {
+                 answerArea.textContent = "";
+                 errorArea.textContent = "请求错误: " + error.message
+            }
+        });
+
+        // Water ripple effect
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let ripples = [];
+        let mouseX = 0;
+        let mouseY = 0;
+
+        function setupCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        setupCanvas();
+        class Ripple {
+          constructor(x,y,radius,color){
+            this.x = x;
+            this.y = y;
+            this.radius = radius;
+            this.color = color;
+            this.opacity = 1
+          }
+           update(){
+            this.radius += 2
+            this.opacity *= 0.96
+          }
+           draw(){
+              ctx.beginPath()
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${this.color.r},${this.color.g},${this.color.b},${this.opacity})`;
+            ctx.fill()
+          }
+
+        }
+
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            const color = getPixelColor(mouseX, mouseY);
+
+            ripples.push(new Ripple(mouseX, mouseY, 1, color));
+        });
+
+          function getPixelColor(x, y) {
+            const gradient = getComputedStyle(document.body).backgroundImage;
+             const img = new Image();
+            img.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="${gradient}"/></svg>`;
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 1;
+                tempCanvas.height = 1;
+              const tempCtx = tempCanvas.getContext('2d');
+                 img.onload = () => {
+                  tempCtx.drawImage(img, 0, 0, 1, 1);
+
+                  }
+                  tempCtx.fillStyle = gradient
+                  tempCtx.fillRect(0,0,1,1);
+               const  pixel = tempCtx.getImageData(0,0, 1, 1).data;
+                return {r:pixel[0],g:pixel[1],b:pixel[2]}
+        }
+
+
+         function animateRipples(){
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+           ripples = ripples.filter((ripple)=> ripple.opacity > 0.01)
+          ripples.forEach((ripple)=>{
+            ripple.update();
+            ripple.draw();
+          })
+             requestAnimationFrame(animateRipples);
+        }
+          animateRipples();
+        window.addEventListener('resize', () => {
+            setupCanvas();
+        });
+
+          modelList.addEventListener('click', (e) => {
+            if(e.target && e.target.tagName === 'LI')
+            {
+                modelList.querySelectorAll('li').forEach(li => li.classList.remove('active'));
+                e.target.classList.add('active')
+               currentModel = e.target.getAttribute('data-model')
+            }
+          });
+
+            modelSearch.addEventListener('input', filterModels)
+    </script>
+</body>
+
+</html>
